@@ -4,6 +4,10 @@ namespace SpriteKind {
     export const Boat1 = SpriteKind.create()
     export const Boat2 = SpriteKind.create()
 }
+controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+    grid.move(cursor, 0, -1)
+    grid.place(ghost, tiles.getTileLocation(grid.spriteCol(cursor), grid.spriteRow(cursor) - -1))
+})
 controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
     turnBoat(currentBoat)
 })
@@ -12,12 +16,6 @@ function makeBoatVisible (boatArray: Sprite[]) {
         previousBoatSprite.setFlag(SpriteFlag.Invisible, false)
     }
 }
-sprites.onOverlap(SpriteKind.Boat0, SpriteKind.Boat1, function (sprite, otherSprite) {
-    if (currentBoat == 1 && overlapFlag == 0) {
-        grid.move(cursor, 1, 0)
-        overlapFlag += 1
-    }
-})
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     if (currentBoat == 2) {
         cursor.setFlag(SpriteFlag.Invisible, false)
@@ -26,6 +24,14 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
         currentBoat += 1
         grid.place(cursor, tiles.getTileLocation(0, 0))
     }
+})
+controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+    grid.move(cursor, -1, 0)
+    grid.place(ghost, tiles.getTileLocation(grid.spriteRow(cursor) - 1, grid.spriteCol(cursor)))
+})
+controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+    grid.move(cursor, 1, 0)
+    grid.place(ghost, tiles.getTileLocation(grid.spriteRow(cursor) - -1, grid.spriteCol(cursor)))
 })
 function moveBoat (boatArray: any[]) {
     makeBoatVisible(boatArray)
@@ -46,6 +52,10 @@ function moveBoat (boatArray: any[]) {
         iterator += 1
     }
 }
+controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+    grid.move(cursor, 0, -1)
+    grid.place(ghost, tiles.getTileLocation(grid.spriteCol(cursor), grid.spriteRow(cursor) - -1))
+})
 function makeBoatInvisible (boatArray: Sprite[]) {
     for (let value3 of boatArray) {
         value3.setFlag(SpriteFlag.Invisible, true)
@@ -62,7 +72,7 @@ function isOverlapping () {
     for (let index = 0; index <= currentBoat - 1; index++) {
         for (let previousBoatSprite2 of boatSpriteArray[index]) {
             for (let currentBoatSprite2 of boatSpriteArray[currentBoat]) {
-                if (grid.getLocation(previousBoatSprite2) == grid.getLocation(currentBoatSprite2)) {
+                if (grid.spriteCol(currentBoatSprite2) == grid.spriteCol(currentBoatSprite2) && grid.spriteRow(currentBoatSprite2) == grid.spriteRow(currentBoatSprite2)) {
                     return 1
                 }
             }
@@ -71,14 +81,14 @@ function isOverlapping () {
     return 0
 }
 let iterator = 0
+let ghost: Sprite = null
 let cursor: Sprite = null
 let moveBoatFlag = 0
 let boatSpriteArray: Sprite[][] = []
 let boatRotateArray: string[] = []
 let currentBoat = 0
-let overlapFlag = 0
 tiles.setCurrentTilemap(tilemap`level1`)
-overlapFlag = 0
+let rotateFlag = "nothing"
 currentBoat = 0
 boatRotateArray = ["up", "up", "up"]
 boatSpriteArray = [[sprites.create(img`
@@ -262,10 +272,43 @@ cursor = sprites.create(img`
     3 . . . . . . . . . . . . . . 3 
     3 3 3 3 3 . . . . . . 3 3 3 3 3 
     `, SpriteKind.Cursor)
+ghost = sprites.create(img`
+    ........................
+    ........................
+    ........................
+    ........................
+    ..........ffff..........
+    ........ff1111ff........
+    .......fb111111bf.......
+    .......f11111111f.......
+    ......fd11111111df......
+    ......fd11111111df......
+    ......fddd1111dddf......
+    ......fbdbfddfbdbf......
+    ......fcdcf11fcdcf......
+    .......fb111111bf.......
+    ......fffcdb1bdffff.....
+    ....fc111cbfbfc111cf....
+    ....f1b1b1ffff1b1b1f....
+    ....fbfbffffffbfbfbf....
+    .........ffffff.........
+    ...........fff..........
+    ........................
+    ........................
+    ........................
+    ........................
+    `, SpriteKind.Cursor)
 grid.snap(cursor)
-grid.moveWithButtons(cursor)
+grid.snap(ghost)
 game.onUpdate(function () {
     if (moveBoatFlag == 1) {
         moveBoat(boatSpriteArray[currentBoat])
+        if (isOverlapping()) {
+            if (rotateFlag == "nothing") {
+                boatRotateArray[currentBoat] = rotateFlag
+            } else {
+                grid.place(cursor, grid.getLocation(ghost))
+            }
+        }
     }
 })
